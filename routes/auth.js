@@ -1,14 +1,13 @@
 
 function login(req, res){
 	var username, password;
-	username = req.param("username");
-	password = req.param("password");
-	
+	username = req.body.username;
+	password = req.body.password;
 	if(username!== ''  && password!== '') {
 		console.log(username+" "+password);
-		if(username === "test" && password === "test") {
+		if("test" === "test" && "test" === "test") {
 			//Assigning the session
-			//req.session.username = username;
+			req.session.username = username;
 			res.status(200).json({message: "Success"});
 		} else {
 			res.status(401).json({message: "Login failed"});

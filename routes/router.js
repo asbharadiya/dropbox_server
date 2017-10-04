@@ -1,8 +1,17 @@
+var express = require('express');
+var router = express.Router();
 var auth = require('./auth');
 
-module.exports = function(app){
+var login = require('./login');
 
-    app.post('/api/login', auth.login);
+router.post('/api/login', auth.login);
 
-    //other routes..
-}
+//test
+router.get('/', function(req, res, next) {
+  	res.render('login', { title: 'Express' });
+});
+router.get('/homepage',login.redirectToHomepage);
+router.post('/checklogin',login.checklogin);
+router.post('/logout',login.logout);
+
+module.exports = router;
