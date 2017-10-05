@@ -14,7 +14,10 @@ var router = require('./routes/router');
 var app = express();
 
 //CORS ENABLED
-app.use(cors());
+app.use(cors({
+    origin: "http://localhost:3000",
+    credentials: true
+}));
 //app.options('*', cors());
 
 //configure the sessions with our application

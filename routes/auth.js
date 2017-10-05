@@ -1,20 +1,76 @@
+var mysql = require('./mysql');
 
-function login(req, res){
-	var username, password;
-	username = req.body.username;
+function signin(req, res){
+	var email, password;
+	email = req.body.email;
 	password = req.body.password;
-	if(username!== ''  && password!== '') {
-		console.log(username+" "+password);
-		if("test" === "test" && "test" === "test") {
-			//Assigning the session
-			req.session.username = username;
-			res.status(200).json({message: "Success"});
-		} else {
-			res.status(401).json({message: "Login failed"});
-		}
+	if(email !== '' &&  email !== undefined && password !== '' &&  password !== undefined) {
+		var getUser="select * from user where email='" + email + "' and password='" + password +"'";
+		mysql.query(function(err,results){
+			if(err){
+				res.status(500).json({status:500,statusText: err.code});
+			} else {
+				if(results.length > 0) {
+					req.session.id = results[0].id;
+					req.session.isValid = true;
+					res.status(200).json({status:200,statusText:"Success",data:{uname:results[0].first_name+" "+results[0].last_name}});
+				} else {    
+					res.status(401).json({status:401,statusText:"Login failed"});
+				}
+			}  
+		},getUser);
 	} else {
-		res.status(401).json({message: "Login failed"});
+		res.status(400).json({status:400,statusText:"Validation failed"});
 	}
 }
 
-exports.login = login;
+function signup(req, res){
+	var email, password, first_name, last_name;
+	email = req.body.email;
+	password = req.body.password;
+	first_name = req.body.first_name;
+	last_name = req.body.last_name;
+	if(email !== '' &&  email !== undefined && password !== '' &&  password !== undefined 
+		&& first_name !== '' && first_name !== undefined && last_name !== '' && last_name !== undefined) {
+		// check user already exists
+		var checkUser="select * from user where email='"+email+"'";
+		mysql.query(function(err,results){
+			if(err){
+				res.status(500).json({status:500,statusText: err.code});
+			} else {
+				if(results.length > 0) {
+					req.session.email = email;
+					req.session.isValid = true;
+					res.status(409).json({status:409,statusText:"User already exists"});
+				} else {    
+					var createUser = "insert into user (first_name,last_name,email,password,is_verified) " +
+						"values ('"+first_name+"','"+last_name+"','"+email+"','"+password+"',true)";
+					mysql.query(function(err,results){
+						if(err){
+							res.status(500).json({status:500,statusText: err.code});
+						} else {
+							req.session.id = results.insertId;
+							res.status(200).json({status:200,statusText:"Success",data:{uname:first_name+" "+last_name}});
+						}  
+					},createUser);
+				}
+			}  
+		},checkUser);
+	} else {
+		res.status(400).json({status:400,statusText:"Validation failed"});
+	}
+}
+
+
+function checkSession(req, res){
+	console.log("checking...");
+	if(req.session && req.session.isValid){
+		res.status(200).json({status:200,statusText:"Success"});
+	} else {
+		res.status(401).json({status:401,statusText:"Not active"});
+	}
+}
+
+exports.signin = signin;
+exports.signup = signup;
+exports.checkSession = checkSession;
