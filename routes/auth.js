@@ -13,7 +13,8 @@ function signin(req, res){
 				if(results.length > 0) {
 					req.session.id = results[0].id;
 					req.session.isValid = true;
-					res.status(200).json({status:200,statusText:"Success",data:{uname:results[0].first_name+" "+results[0].last_name}});
+					req.session.uname = results[0].first_name+" "+results[0].last_name;
+					res.status(200).json({status:200,statusText:"Success"});
 				} else {    
 					res.status(401).json({status:401,statusText:"Login failed"});
 				}
@@ -40,7 +41,6 @@ function signup(req, res){
 			} else {
 				if(results.length > 0) {
 					req.session.email = email;
-					req.session.isValid = true;
 					res.status(409).json({status:409,statusText:"User already exists"});
 				} else {    
 					var createUser = "insert into user (first_name,last_name,email,password,is_verified) " +
@@ -50,7 +50,9 @@ function signup(req, res){
 							res.status(500).json({status:500,statusText: err.code});
 						} else {
 							req.session.id = results.insertId;
-							res.status(200).json({status:200,statusText:"Success",data:{uname:first_name+" "+last_name}});
+							req.session.isValid = true;
+							req.session.uname = first_name+" "+last_name;
+							res.status(200).json({status:200,statusText:"Success"});
 						}  
 					},createUser);
 				}
@@ -63,14 +65,19 @@ function signup(req, res){
 
 
 function checkSession(req, res){
-	console.log("checking...");
 	if(req.session && req.session.isValid){
-		res.status(200).json({status:200,statusText:"Success"});
+		res.status(200).json({status:200,statusText:"Success",data:{uname:req.session.uname}});
 	} else {
 		res.status(401).json({status:401,statusText:"Not active"});
 	}
 }
 
+function logout(req,res){
+	req.session.destroy();
+	res.status(200).json({status:200,statusText:"Success"});
+}
+
 exports.signin = signin;
 exports.signup = signup;
 exports.checkSession = checkSession;
+exports.logout = logout;
