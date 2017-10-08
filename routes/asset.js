@@ -5,7 +5,15 @@ function addAsset(req, res){
 	if(req.session.isValid){
 		if(req.body.is_directory === 'false'){
 			if(req.file !== undefined && req.file !== null) {
-				var searchDup="select count(*) as count from asset where original_name='"+req.file.originalname+"'";
+				//search for duplicate in shared also and not deleted
+				var searchDup="select count(*) from "+
+					"(select * from asset where original_name='"+req.file.originalname+"' and owner="+req.session.id+" and is_deleted=false "+
+					"union "+
+					"select a.* from asset as a "+
+					"inner join "+
+					"user_asset_shared as uas "+
+					"on a.id=uas.asset "+
+					"where a.original_name='"+req.file.originalname+"' and uas.user="+req.session.id+" and is_deleted=false) result";
 				mysql.query(function(err,results){
 					if(err) {
 						res.status(500).json({status:500,statusText: err.code});
@@ -16,7 +24,14 @@ function addAsset(req, res){
 							new_filename = [new_filename.slice(0, new_filename.lastIndexOf('.')), "(", results[0].count, ")", new_filename.slice(new_filename.lastIndexOf('.'))].join('');
 						}
 						if(req.body.parent !== undefined && req.body.parent !== null){
-							var getParent="select * from asset where name='"+req.body.parent+"'";
+							//check permission
+							var getParent="select * from asset where name='"+req.body.parent+"' and owner="+req.session.id+" and is_deleted=false "+
+								"union "+
+								"select a.* from asset as a "+
+								"inner join "+
+								"user_asset_shared as uas "+
+								"on a.id=uas.asset "+
+								"where uas.user="+req.session.id+" and a.name='"+req.body.parent+"' and is_deleted=false";
 							mysql.query(function(err,results){
 								if(err){
 									res.status(500).json({status:500,statusText: err.code});
@@ -54,7 +69,15 @@ function addAsset(req, res){
 			}
 		} else if(req.body.is_directory === 'true'){
 			if(req.body.name !== undefined && req.body.name !== null) {
-				var searchDup="select count(*) as count from asset where original_name='"+req.body.name+"'";
+				//search for duplicate in shared also and not deleted
+				var searchDup="select count(*) from "+
+					"(select * from asset where original_name='"+req.file.originalname+"' and owner="+req.session.id+" and is_deleted=false "+
+					"union "+
+					"select a.* from asset as a "+
+					"inner join "+
+					"user_asset_shared as uas "+
+					"on a.id=uas.asset "+
+					"where a.original_name='"+req.file.originalname+"' and uas.user="+req.session.id+" and is_deleted=false) result";
 				mysql.query(function(err,results){
 					if(err) {
 						res.status(500).json({status:500,statusText: err.code});
@@ -65,7 +88,14 @@ function addAsset(req, res){
 							new_filename = [new_filename, "(", results[0].count, ")"].join('');
 						}
 						if(req.body.parent !== undefined && req.body.parent !== null){
-							var getParent="select * from asset where name='"+req.body.parent+"'";
+							//check permission
+							var getParent="select * from asset where name='"+req.body.parent+"' and owner="+req.session.id+" and is_deleted=false "+
+								"union "+
+								"select a.* from asset as a "+
+								"inner join "+
+								"user_asset_shared as uas "+
+								"on a.id=uas.asset "+
+								"where uas.user="+req.session.id+" and a.name='"+req.body.parent+"' and is_deleted=false";
 							mysql.query(function(err,results){
 								if(err){
 									res.status(500).json({status:500,statusText: err.code});
@@ -143,7 +173,14 @@ function getAssets(req, res){
 				}  
 			},getAssets);
 		} else if(req.body.parent !== undefined && req.body.parent !== null){
-			var getParent="select * from asset where name='"+req.body.parent+"'";
+			//check permission
+			var getParent="select * from asset where name='"+req.body.parent+"' and owner="+req.session.id+" and is_deleted=false "+
+				"union "+
+				"select a.* from asset as a "+
+				"inner join "+
+				"user_asset_shared as uas "+
+				"on a.id=uas.asset "+
+				"where uas.user="+req.session.id+" and a.name='"+req.body.parent+"' and is_deleted=false";
 			mysql.query(function(err,results){
 				if(err){
 					res.status(500).json({status:500,statusText: err.code});
