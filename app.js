@@ -24,8 +24,8 @@ app.use(cors({
 app.use(session({   
 	cookieName: 'session',    
 	secret: 'cmpe273_test_string',    
-	duration: 30 * 60 * 1000,    //setting the time for active session
-	activeDuration: 5 * 60 * 1000,  })); // setting time for the session to be active when the window is open // 5 minutes set currently
+	duration: 24 * 60 * 60 * 1000,    //setting the time for active session
+	activeDuration: 3 * 60 * 60 * 1000,  })); // setting time for the session to be active when the window is open // 5 minutes set currently
 
 // all environments
 app.set('port', process.env.PORT || 3001);
