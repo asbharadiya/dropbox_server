@@ -47,7 +47,7 @@ function addRemoveMemberGroup(req,res){
 			&& req.body.memberId !== undefined && req.body.memberId !== null) {
 			if(req.body.action === 'ADD'){
 				//check if already added
-				var checkAdded = "select count(*) from user_groups where user="+req.body.memberId+" and group="+req.body.groupId;
+				var checkAdded = "select count(*) from user_groups where user="+req.body.memberId+" and groups="+req.body.groupId;
 				mysql.query(function(err,results){
 					if(err){
 						res.status(500).json({status:500,statusText: err.code});
@@ -56,7 +56,7 @@ function addRemoveMemberGroup(req,res){
 							res.status(400).json({status:400,statusText:"Already added to group"});
 						} else {
 							//add to group
-							var addMember = "insert into user_groups (user, group) values ("+req.body.memberId+","+req.body.groupId+")";
+							var addMember = "insert into user_groups (user, groups) values ("+req.body.memberId+","+req.body.groupId+")";
 							mysql.query(function(err,results){
 								if(err){
 									res.status(500).json({status:500,statusText: err.code});
@@ -68,7 +68,7 @@ function addRemoveMemberGroup(req,res){
 					}  
 				},checkAdded); 
 			} else {
-				var checkAdded = "select count(*) from user_groups where user="+req.body.memberId+" and group="+req.body.groupId;
+				var checkAdded = "select count(*) from user_groups where user="+req.body.memberId+" and groups="+req.body.groupId;
 				mysql.query(function(err,results){
 					if(err){
 						res.status(500).json({status:500,statusText: err.code});
@@ -77,7 +77,7 @@ function addRemoveMemberGroup(req,res){
 							res.status(400).json({status:400,statusText:"Member not found in group"});
 						} else {
 							//remove from group
-							var removeMember = "delete from user_groups where user="+req.body.memberId+" and group="+req.body.groupId;
+							var removeMember = "delete from user_groups where user="+req.body.memberId+" and groups="+req.body.groupId;
 							mysql.query(function(err,results){
 								if(err){
 									res.status(500).json({status:500,statusText: err.code});
@@ -144,7 +144,7 @@ function getGroupById(req,res){
 							"inner join "+
 							"user_groups "+
 							"on user_groups.user=user.id "+
-							"where user_groups.group="+req.query.id;
+							"where user_groups.groups="+req.query.id;
 						mysql.query(function(err,results2){
 							if(err){
 								res.status(500).json({status:500,statusText: err.code});
@@ -167,12 +167,12 @@ function getGroupById(req,res){
 
 function getGroups(req,res){
 	if(req.session.isValid){
-		var getGroups="select id, name, true as can_delete from groups where owner="+req.session.id+
+		var getGroups="select id, name, true as can_delete from groups where owner="+req.session.id+" "+
 			"union "+
 			"select g.id, g.name, false as can_delete from groups as g "+
 			"inner join "+
 			"user_groups as ug "+
-			"on g.id=ug.group "+
+			"on g.id=ug.groups "+
 			"where ug.user="+req.session.id;
 		mysql.query(function(err,results){
 			if(err){
@@ -195,7 +195,7 @@ function searchGroups(req,res){
 			"select g.id, g.name, false as can_delete from groups as g "+
 			"inner join "+
 			"user_groups as ug "+
-			"on g.id=ug.group "+
+			"on g.id=ug.groups "+
 			"where ug.user="+req.session.id;
 		mysql.query(function(err,results){
 			if(err){
@@ -214,7 +214,7 @@ function searchGroups(req,res){
 function searchUsers(req,res){
 	if(req.session.isValid){
 		var searchUsers="select id, concat(first_name,' ',last_name) as user_name, email from user "+
-			"where (first_name like '%"+req.query.q+"%' or last_name like '%"+req.query.q+"%' or email like '%"+req.query.q+"%')";
+			"where (first_name like '%"+req.query.q+"%' or last_name like '%"+req.query.q+"%' or email like '%"+req.query.q+"%') and id <> "+req.session.id;
 		mysql.query(function(err,results){
 			if(err){
 				res.status(500).json({status:500,statusText: err.code});

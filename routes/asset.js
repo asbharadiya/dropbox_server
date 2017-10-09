@@ -71,13 +71,13 @@ function addAsset(req, res){
 			if(req.body.name !== undefined && req.body.name !== null) {
 				//search for duplicate in shared also and not deleted
 				var searchDup="select count(*) from "+
-					"(select * from asset where original_name='"+req.file.originalname+"' and owner="+req.session.id+" and is_deleted=false "+
+					"(select * from asset where original_name='"+req.body.name+"' and owner="+req.session.id+" and is_deleted=false "+
 					"union "+
 					"select a.* from asset as a "+
 					"inner join "+
 					"user_asset_shared as uas "+
 					"on a.id=uas.asset "+
-					"where a.original_name='"+req.file.originalname+"' and uas.user="+req.session.id+" and is_deleted=false) result";
+					"where a.original_name='"+req.body.name+"' and uas.user="+req.session.id+" and is_deleted=false) result";
 				mysql.query(function(err,results){
 					if(err) {
 						res.status(500).json({status:500,statusText: err.code});

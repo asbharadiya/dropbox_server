@@ -6,6 +6,7 @@ var multer = require('multer');
 var auth = require('./auth');
 var asset = require('./asset');
 var group = require('./group');
+var user = require('./user');
 
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -35,5 +36,7 @@ router.get('/api/get_group_by_id',group.getGroupById);
 router.get('/api/get_groups',group.getGroups);
 router.get('/api/search_groups',group.searchGroups);
 router.get('/api/search_users',group.searchUsers);
+router.post('/api/user_profile',user.updateUserProfile);
+router.get('/api/user_profile',user.getUserProfile);
 
 module.exports = router;
