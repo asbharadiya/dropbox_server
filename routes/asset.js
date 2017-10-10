@@ -497,7 +497,7 @@ function downloadAsset(req, res) {
 						if(results.length > 0) {
 							var metadata = JSON.parse(results[0].metadata);
 							var file = "./tmp/"+metadata.filename;
-							res.setHeader("Content-disposition", "attachment; filename="+results[0].name);
+							res.setHeader("Content-disposition", "attachment;filename="+results[0].name);
 							res.setHeader("Content-type", metadata.mimetype);
 					  		res.download(file);
 						} else {

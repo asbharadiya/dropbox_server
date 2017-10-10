@@ -1,22 +1,30 @@
 var mysql = require('./mysql');
+var bcrypt = require('bcrypt');
+const saltRounds = 10;
 
 function signin(req, res){
 	var email, password;
 	email = req.body.email;
 	password = req.body.password;
 	if(email !== '' &&  email !== undefined && password !== '' &&  password !== undefined) {
-		var getUser="select * from user where email='" + email + "' and password='" + password +"'";
+		var getUser="select * from user where email='" + email + "'";
 		mysql.query(function(err,results){
 			if(err){
 				res.status(500).json({status:500,statusText: err.code});
 			} else {
 				if(results.length > 0) {
-					req.session.id = results[0].id;
-					req.session.isValid = true;
-					req.session.uname = results[0].first_name+" "+results[0].last_name;
-					res.status(200).json({status:200,statusText:"Success"});
+					bcrypt.compare(password, results[0].password, function(err, result) {
+						if(result === true) {
+							req.session.id = results[0].id;
+							req.session.isValid = true;
+							req.session.uname = results[0].first_name+" "+results[0].last_name;
+							res.status(200).json({status:200,statusText:"Success"});
+						} else {
+							res.status(401).json({status:401,statusText:"Password is incorrect"});
+						}
+					});
 				} else {    
-					res.status(401).json({status:401,statusText:"Login failed"});
+					res.status(401).json({status:401,statusText:"User does not exist"});
 				}
 			}  
 		},getUser);
@@ -42,19 +50,21 @@ function signup(req, res){
 				if(results.length > 0) {
 					req.session.email = email;
 					res.status(409).json({status:409,statusText:"User already exists"});
-				} else {    
-					var createUser = "insert into user (first_name,last_name,email,password,is_verified) " +
-						"values ('"+first_name+"','"+last_name+"','"+email+"','"+password+"',true)";
-					mysql.query(function(err,results){
-						if(err){
-							res.status(500).json({status:500,statusText: err.code});
-						} else {
-							req.session.id = results.insertId;
-							req.session.isValid = true;
-							req.session.uname = first_name+" "+last_name;
-							res.status(200).json({status:200,statusText:"Success"});
-						}  
-					},createUser);
+				} else {  
+					bcrypt.hash(password, saltRounds, function(err, hash) {
+						var createUser = "insert into user (first_name,last_name,email,password,is_verified) " +
+							"values ('"+first_name+"','"+last_name+"','"+email+"','"+hash+"',true)";
+						mysql.query(function(err,results){
+							if(err){
+								res.status(500).json({status:500,statusText: err.code});
+							} else {
+								req.session.id = results.insertId;
+								req.session.isValid = true;
+								req.session.uname = first_name+" "+last_name;
+								res.status(200).json({status:200,statusText:"Success"});
+							}  
+						},createUser);
+					});
 				}
 			}  
 		},checkUser);
