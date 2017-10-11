@@ -40,5 +40,6 @@ router.get('/api/search_groups',group.searchGroups);
 router.get('/api/search_users',group.searchUsers);
 router.post('/api/user_profile',user.updateUserProfile);
 router.get('/api/user_profile',user.getUserProfile);
+router.get('/api/user_activity',user.getUserActivity);
 
 module.exports = router;

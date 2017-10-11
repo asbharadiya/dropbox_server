@@ -1,4 +1,5 @@
 var mysql = require('./mysql');
+var moment = require('moment');
 
 function updateUserProfile(req,res){
 	if(req.session.isValid){
@@ -10,7 +11,9 @@ function updateUserProfile(req,res){
 				if(err){
 					res.status(500).json({status:500,statusText: err.code});
 				} else {
-					res.status(200).json({status:200,statusText:"Success"});
+					addUserActivity(req.session.id,"Profile updated",function(activity_res){
+						res.status(200).json({status:200,statusText:"Success"});
+					});
 				}  
 			},updateUser);
 		} else {
@@ -36,5 +39,34 @@ function getUserProfile(req,res){
 	}
 }
 
+function getUserActivity(req,res){
+	if(req.session.isValid){
+		var getUserActivity = "select date(created_date) as date, action from user_activity where user="+req.session.id+" and created_date >= (curdate() - interval 1 month) order by date";
+		mysql.query(function(err,results){
+			if(err){
+				res.status(500).json({status:500,statusText: err.code});
+			} else {
+				res.status(200).json({status:200,statusText:"Success",data:results});
+			}  
+		},getUserActivity);
+	} else {
+		res.status(401).json({status:401,statusText:"Not authorized"});
+	}
+}
+
+function addUserActivity(user,action,callback){
+	var addActivity = "insert into user_activity (action, created_date, user) "+
+		"values ('"+action+"', '"+moment().format('YYYY-MM-DD HH:mm:ss')+"', "+user+")";
+	mysql.query(function(err,results){
+		if(err){
+			callback(false);
+		} else {
+			callback(true);
+		}  
+	},addActivity);
+}
+
 exports.updateUserProfile = updateUserProfile;
 exports.getUserProfile = getUserProfile;
+exports.addUserActivity = addUserActivity;
+exports.getUserActivity = getUserActivity;

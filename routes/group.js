@@ -1,4 +1,5 @@
 var mysql = require('./mysql');
+var user = require('./user');
 var moment = require('moment');
 
 function createGroup(req,res){
@@ -10,7 +11,9 @@ function createGroup(req,res){
 				if(err){
 					res.status(500).json({status:500,statusText: err.code});
 				} else {
-					res.status(200).json({status:200,statusText:"Success"});
+					user.addUserActivity(req.session.id,"New group created",function(activity_res){
+						res.status(200).json({status:200,statusText:"Success"});
+					});
 				}  
 			},newGroup);
 		} else {

@@ -1,4 +1,5 @@
 var mysql = require('./mysql');
+var user = require('./user');
 var moment = require('moment');
 
 function addAsset(req, res){
@@ -53,7 +54,9 @@ function addAsset(req, res){
 												if(err){
 													res.status(500).json({status:500,statusText: err.code});
 												} else {
-													res.status(200).json({status:200,statusText:"Success"});
+													user.addUserActivity(req.session.id,"New file uploaded",function(activity_res){
+														res.status(200).json({status:200,statusText:"Success"});
+													});
 												}  
 											},newAsset);
 										}  
@@ -82,7 +85,9 @@ function addAsset(req, res){
 															if(err){
 																res.status(500).json({status:500,statusText: err.code});
 															} else {
-																res.status(200).json({status:200,statusText:"Success"});
+																user.addUserActivity(req.session.id,"New file uploaded",function(activity_res){
+																	res.status(200).json({status:200,statusText:"Success"});
+																});
 															}  
 														},newAsset);
 													}  
@@ -140,7 +145,9 @@ function addAsset(req, res){
 								if(err){
 									res.status(500).json({status:500,statusText: err.code});
 								} else {
-									res.status(200).json({status:200,statusText:"Success"});
+									user.addUserActivity(req.session.id,"New file uploaded",function(activity_res){
+										res.status(200).json({status:200,statusText:"Success"});
+									});
 								}  
 							},newAsset);
 						}  
@@ -199,7 +206,9 @@ function addAsset(req, res){
 												if(err){
 													res.status(500).json({status:500,statusText: err.code});
 												} else {
-													res.status(200).json({status:200,statusText:"Success"});
+													user.addUserActivity(req.session.id,"New folder created",function(activity_res){
+														res.status(200).json({status:200,statusText:"Success"});
+													});
 												}  
 											},newAsset);
 										}  
@@ -228,7 +237,9 @@ function addAsset(req, res){
 															if(err){
 																res.status(500).json({status:500,statusText: err.code});
 															} else {
-																res.status(200).json({status:200,statusText:"Success"});
+																user.addUserActivity(req.session.id,"New folder created",function(activity_res){
+																	res.status(200).json({status:200,statusText:"Success"});
+																});
 															}  
 														},newAsset);
 													}  
@@ -286,7 +297,9 @@ function addAsset(req, res){
 								if(err){
 									res.status(500).json({status:500,statusText: err.code});
 								} else {
-									res.status(200).json({status:200,statusText:"Success"});
+									user.addUserActivity(req.session.id,"New folder created",function(activity_res){
+										res.status(200).json({status:200,statusText:"Success"});
+									});
 								}  
 							},newAsset);
 						}  
@@ -477,7 +490,9 @@ function deleteAsset(req,res){
 								if(err){
 									res.status(500).json({status:500,statusText: err.code});
 								} else {
-									res.status(200).json({status:200,statusText:"Success"});
+									user.addUserActivity(req.session.id,"File or folder deleted",function(activity_res){
+										res.status(200).json({status:200,statusText:"Success"});
+									});
 									//TODO: if folder, delete containing files/folders
 								}  
 							},deleteAsset);
@@ -533,7 +548,9 @@ function addOrRemoveStarredAsset(req,res){
 											if(err){
 												res.status(500).json({status:500,statusText: err.code});
 											} else {
-												res.status(200).json({status:200,statusText:"Success"});
+												user.addUserActivity(req.session.id,"File or folder starred",function(activity_res){
+													res.status(200).json({status:200,statusText:"Success"});
+												});
 											}  
 										},addToStarred);
 									} else {
@@ -581,6 +598,7 @@ function shareAsset(req, res) {
 											if(err){
 												res.status(500).json({status:500,statusText: err.code});
 											} else {
+												//TODO: add user activity
 												res.status(200).json({status:200,statusText:"Success"});
 											}  
 										},addToShared);
@@ -603,6 +621,7 @@ function shareAsset(req, res) {
 											if(err){
 												res.status(500).json({status:500,statusText: err.code});
 											} else {
+												//TODO: add user activity
 												res.status(200).json({status:200,statusText:"Success"});
 											}  
 										},addToShared);
