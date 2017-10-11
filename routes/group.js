@@ -190,7 +190,7 @@ function getGroups(req,res){
 
 function searchGroups(req,res){
 	if(req.session.isValid){
-		var searchGroups="select id, name, true as can_delete from groups where name like '%"+req.query.q+"%' and owner="+req.session.id+
+		var searchGroups="select id, name, true as can_delete from groups where name like '%"+req.query.q+"%' and owner="+req.session.id+" "+
 			"union "+
 			"select g.id, g.name, false as can_delete from groups as g "+
 			"inner join "+

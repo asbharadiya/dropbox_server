@@ -27,6 +27,7 @@ router.post('/api/add_asset',upload.single('file'),asset.addAsset);
 router.post('/api/get_assets',asset.getAssets);
 router.post('/api/delete_asset',asset.deleteAsset);
 router.post('/api/star_asset',asset.addOrRemoveStarredAsset);
+router.post('/api/share_asset',asset.shareAsset);
 router.get('/api/download_asset/:assetId/:super_parent?',asset.downloadAsset);
 
 router.post('/api/create_group',group.createGroup);
