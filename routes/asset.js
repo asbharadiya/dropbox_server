@@ -1,6 +1,7 @@
 var mysql = require('./mysql');
 var user = require('./user');
 var moment = require('moment');
+var fs = require('fs');
 
 function addAsset(req, res){
 	if(req.session.isValid){
@@ -38,7 +39,7 @@ function addAsset(req, res){
 							if(results.length > 0) {
 								if(req.body.super_parent === req.body.parent) {
 									//search for duplicate and not deleted
-									var searchDup = "select count(*) from asset where original_name='"+req.file.originalname+"' and parent="+results[0].id+" and is_deleted=false";
+									var searchDup = "select count(*) as count from asset where original_name='"+req.file.originalname+"' and parent="+results[0].id+" and is_deleted=false";
 									mysql.query(function(err,results2){
 										if(err){
 											res.status(500).json({status:500,statusText: err.code});
@@ -46,19 +47,30 @@ function addAsset(req, res){
 											//changing duplicate folder name
 											var new_filename = req.file.originalname;
 											if(results2[0].count > 0){
-												new_filename = [new_filename, "(", results2[0].count, ")"].join('');
+												new_filename = [new_filename.substring(0, new_filename.lastIndexOf(".")), "(", results[0].count, ")",new_filename.substring(new_filename.lastIndexOf("."), new_filename.length)].join('');
 											}
-											var newAsset = "insert into asset (is_directory,is_deleted,created_date,metadata,name,original_name,parent,owner) " +
-											"values (false,false,'"+moment().format('YYYY-MM-DD HH:mm:ss')+"','"+JSON.stringify(req.file)+"','"+new_filename+"','"+req.file.originalname+"',"+results[0].id+","+results[0].owner+")";
-											mysql.query(function(err,results){
-												if(err){
-													res.status(500).json({status:500,statusText: err.code});
-												} else {
-													user.addUserActivity(req.session.id,"New file uploaded",function(activity_res){
-														res.status(200).json({status:200,statusText:"Success"});
-													});
-												}  
-											},newAsset);
+											var folderPath = "./tmp/"+Date.now();
+											fs.mkdirSync(folderPath);
+											var filePath = folderPath+"/"+new_filename;
+											fs.writeFile(filePath, req.file.buffer, "binary",function(err) {
+												if(err) {
+											        res.status(500).json({status:500,statusText: err.code});
+											    } else {
+											    	req.file.path = filePath;
+											    	req.file.buffer = null;
+											    	var newAsset = "insert into asset (is_directory,is_deleted,created_date,metadata,name,original_name,parent,owner) " +
+														"values (false,false,'"+moment().format('YYYY-MM-DD HH:mm:ss')+"','"+JSON.stringify(req.file)+"','"+new_filename+"','"+req.file.originalname+"',"+results[0].id+","+results[0].owner+")";
+													mysql.query(function(err,results){
+														if(err){
+															res.status(500).json({status:500,statusText: err.code});
+														} else {
+															user.addUserActivity(req.session.id,"New file uploaded",function(activity_res){
+																res.status(200).json({status:200,statusText:"Success"});
+															});
+														}  
+													},newAsset);
+											    }
+											});
 										}  
 									},searchDup);
 								} else {
@@ -105,7 +117,7 @@ function addAsset(req, res){
 					},getSuperParent);
 				} else {
 					//search for duplicate in shared also and not deleted
-					var searchDup="select count(*) from "+
+					var searchDup="select count(*) as count from "+
 						"((select * from asset where original_name='"+req.file.originalname+"' and owner="+req.session.id+" and is_deleted=false "+
 						//check shared
 						"union "+
@@ -137,19 +149,30 @@ function addAsset(req, res){
 							//changing duplicate folder name
 							var new_filename = req.file.originalname;
 							if(results[0].count > 0){
-								new_filename = [new_filename, "(", results[0].count, ")"].join('');
+								new_filename = [new_filename.substring(0, new_filename.lastIndexOf(".")), "(", results[0].count, ")",new_filename.substring(new_filename.lastIndexOf("."), new_filename.length)].join('');
 							}
-							var newAsset = "insert into asset (is_directory,is_deleted,created_date,metadata,name,original_name,owner) " +
-								"values (false,false,'"+moment().format('YYYY-MM-DD HH:mm:ss')+"','"+JSON.stringify(req.file)+"','"+new_filename+"','"+req.file.originalname+"',"+req.session.id+")";
-							mysql.query(function(err,results){
-								if(err){
-									res.status(500).json({status:500,statusText: err.code});
-								} else {
-									user.addUserActivity(req.session.id,"New file uploaded",function(activity_res){
-										res.status(200).json({status:200,statusText:"Success"});
-									});
-								}  
-							},newAsset);
+							var folderPath = "./tmp/"+Date.now();
+							fs.mkdirSync(folderPath);
+							var filePath = folderPath+"/"+new_filename;
+							fs.writeFile(filePath, req.file.buffer, "binary",function(err) {
+								if(err) {
+							        res.status(500).json({status:500,statusText: err.code});
+							    } else {
+							    	req.file.path = filePath;
+							    	req.file.buffer = null;
+							    	var newAsset = "insert into asset (is_directory,is_deleted,created_date,metadata,name,original_name,owner) " +
+										"values (false,false,'"+moment().format('YYYY-MM-DD HH:mm:ss')+"','"+JSON.stringify(req.file)+"','"+new_filename+"','"+req.file.originalname+"',"+req.session.id+")";
+									mysql.query(function(err,results){
+										if(err){
+											res.status(500).json({status:500,statusText: err.code});
+										} else {
+											user.addUserActivity(req.session.id,"New file uploaded",function(activity_res){
+												res.status(200).json({status:200,statusText:"Success"});
+											});
+										}  
+									},newAsset);
+							    }
+							});
 						}  
 					},searchDup);
 				}
@@ -654,7 +677,7 @@ function downloadAsset(req, res) {
 					"inner join "+
 					"user_asset_shared as uas "+
 					"on a.id=uas.asset "+
-					"where uas.user="+req.session.id+" and a.name='"+req.params.super_parent+"' and is_deleted=false"+
+					"where uas.user="+req.session.id+" and a.name='"+req.params.super_parent+"' and is_deleted=false "+
 					//from group shared
 					"union "+
 					"select a.* from asset as a "+
@@ -683,7 +706,7 @@ function downloadAsset(req, res) {
 								} else {
 									if(results.length > 0) {
 										var metadata = JSON.parse(results[0].metadata);
-										var file = "./tmp/"+metadata.filename;
+										var file = metadata.path;
 										res.setHeader("Content-disposition", "attachment; filename="+results[0].name);
 										res.setHeader("Content-type", metadata.mimetype);
 								  		res.download(file);
@@ -705,7 +728,7 @@ function downloadAsset(req, res) {
 					"inner join "+
 					"user_asset_shared as uas "+
 					"on a.id=uas.asset "+
-					"where uas.user="+req.session.id+" and a.id='"+req.params.assetId+"' and is_deleted=false"+
+					"where uas.user="+req.session.id+" and a.id='"+req.params.assetId+"' and is_deleted=false "+
 					//from group shared
 					"union "+
 					"select a.* from asset as a "+
@@ -728,10 +751,11 @@ function downloadAsset(req, res) {
 					} else {
 						if(results.length > 0) {
 							var metadata = JSON.parse(results[0].metadata);
-							var file = "./tmp/"+metadata.filename;
+							var file = metadata.path;
 							res.setHeader("Content-disposition", "attachment;filename="+results[0].name);
 							res.setHeader("Content-type", metadata.mimetype);
-					  		res.download(file);
+					  		//res.download(file);
+					  		res.send(file);
 						} else {
 							res.status(400).json({status:400,statusText:"You don't have access to this folder"});
 						}
