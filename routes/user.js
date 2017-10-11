@@ -39,6 +39,21 @@ function getUserProfile(req,res){
 	}
 }
 
+function getUserProfileWithoutPool(req,res){
+	if(req.session.isValid){
+		var getUser = "select first_name, last_name, email, about, education, occupation, contact_no from user where id="+req.session.id;
+		mysql.queryWithoutPool(function(err,results){
+			if(err){
+				res.status(500).json({status:500,statusText: err.code});
+			} else {
+				res.status(200).json({status:200,statusText:"Success",data:results[0]});
+			}  
+		},getUser);
+	} else {
+		res.status(401).json({status:401,statusText:"Not authorized"});
+	}
+}
+
 function getUserActivity(req,res){
 	if(req.session.isValid){
 		var getUserActivity = "select date(created_date) as date, action from user_activity where user="+req.session.id+" and created_date >= (curdate() - interval 1 month) order by date";
@@ -68,5 +83,6 @@ function addUserActivity(user,action,callback){
 
 exports.updateUserProfile = updateUserProfile;
 exports.getUserProfile = getUserProfile;
+exports.getUserProfileWithoutPool = getUserProfileWithoutPool;
 exports.addUserActivity = addUserActivity;
 exports.getUserActivity = getUserActivity;
