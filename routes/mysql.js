@@ -7,7 +7,7 @@ var connectionQueue = [];
 
 var createConnectionPool = function(numberOfConnection){
     
-    console.log("creating connection pool...");
+    //console.log("creating connection pool...");
     var conn;
     for(var count=0; count < numberOfConnection; count++){
         conn = mysql.createConnection({
@@ -51,12 +51,12 @@ createConnectionPool(numberOfConnection);
 
 function query(callback, sqlQuery) {
 
-    console.log("\nSQL Query:" + sqlQuery);
+    //console.log("\nSQL Query:" + sqlQuery);
 
     getConnection(function(err, connection) {
         connection.query(sqlQuery, function(err, result) {
             if (err) {
-                console.log("ERROR: " + err.message);
+                //console.log("ERROR: " + err.message);
             } else {
                 connection.releaseConnection;
                 connectionStack.push(connection);
