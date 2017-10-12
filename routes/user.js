@@ -1,4 +1,5 @@
 var mysql = require('./mysql');
+var mysqlWithoutPool = require('./mysqlWithoutPool');
 var moment = require('moment');
 
 function updateUserProfile(req,res){
@@ -42,7 +43,7 @@ function getUserProfile(req,res){
 function getUserProfileWithoutPool(req,res){
 	if(req.session.isValid){
 		var getUser = "select first_name, last_name, email, about, education, occupation, contact_no from user where id="+req.session.id;
-		mysql.queryWithoutPool(function(err,results){
+		mysqlWithoutPool.queryWithoutPool(function(err,results){
 			if(err){
 				res.status(500).json({status:500,statusText: err.code});
 			} else {

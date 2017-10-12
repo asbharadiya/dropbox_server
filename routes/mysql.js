@@ -1,78 +1,69 @@
 var mysql = require('mysql');
 
-//Put your mysql configuration settings - user, password, database and port
-function getConnection(){
-	// var connection = mysql.createConnection({
-	//     host     : 'localhost',
-	//     user     : 'root',
-	//     password : 'root',
-	//     database : 'dropbox',
-	//     port	 : 3306
-	// });
-	// return connection;
-	var connection = mysql.createPool({
-		connectionLimit : 500,
-	    host     : 'localhost',
-	    user     : 'root',
-	    password : 'root',
-	    database : 'dropbox',
-	    port	 : 3306
-	});
-	return connection;
+var numberOfConnection = 151;
+var connectionStack = [];
+var connectionQueue = [];
+
+
+var createConnectionPool = function(numberOfConnection){
+    
+    console.log("creating connection pool...");
+    var conn;
+    for(var count=0; count < numberOfConnection; count++){
+        conn = mysql.createConnection({
+            host : 'localhost',
+            user : 'root',
+            password : 'root',
+            database : 'dropbox',
+            port : 3306
+        });
+        connectionStack.push(conn);
+    }
+
 }
 
-
-function query(callback,sqlQuery){
-	
-	console.log("\nSQL Query::"+sqlQuery);
-	
-	var connection=getConnection();
-	
-	connection.getConnection(function(err, connection){
-		connection.query(sqlQuery, function(err, rows, fields) {
-			
-			if(err){
-				console.log("ERROR: " + err.message);
-			} else {	// return err or result
-				callback(err, rows);
-			}
-			connection.release();
-			console.log("\nConnection closed..");
-		
-		});
-	});
-	
+var getConnection = function(callback){
+    
+    if(connectionStack.length > 0){
+        //connection available, pop from the connection stack
+        connection = connectionStack.pop();
+        callback(null, connection);
+    } else {
+        //connection not available, push to connection wait queue
+        connectionQueue.push(callback);
+    }
 }
 
-function queryWithoutPool(callback,sqlQuery){
+//check for available connection every second
+setInterval(function(){
+    if(connectionStack.length > 0){
+        if(connectionQueue.length > 0){
+            callback = connectionQueue.shift();
+            connection = connectionStack.pop();
+            callback(null, connection);
+        }
+    }
+}, 1000)
 
-	console.log("\nSQL Query::"+sqlQuery);
-	
-	var connection = mysql.createConnection({
-		host     : 'localhost',
-		user     : 'root',
-		password : 'root',
-		database : 'dropbox',
-		port	 : 3306
-	});
 
-	connection.connect();
+createConnectionPool(numberOfConnection);
 
-	connection.query(sqlQuery, function(err, rows, fields) {
-		
-		if(err){
-			console.log("ERROR: " + err.message);
-		} else {	// return err or result
-			callback(err, rows);
-		}
-		console.log("\nConnection closed..");
 
-	});
+function query(callback, sqlQuery) {
 
-	connection.end();
-	
+    console.log("\nSQL Query:" + sqlQuery);
+
+    getConnection(function(err, connection) {
+        connection.query(sqlQuery, function(err, result) {
+            if (err) {
+                console.log("ERROR: " + err.message);
+            } else {
+                connection.releaseConnection;
+                connectionStack.push(connection);
+                callback(err, result);
+            }
+        });
+    });
 }
-
 
 exports.query=query;
-exports.queryWithoutPool=queryWithoutPool;
